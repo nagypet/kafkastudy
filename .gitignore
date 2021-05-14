@@ -24,9 +24,10 @@ node_modules
 AdminGUI/dist
 
 #Others
+spvitamin
 .gradle
 build
-webservice/bin
+eventlog-service/bin
 webservice-api/bin
 out
 polc
