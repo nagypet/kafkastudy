@@ -1,10 +1,10 @@
 # kafkastudy
 
 ## Introduction
-Adam Mautner: [Introducing Apache Kafka](https://imarcats.wordpress.com/2019/02/13/introducing-apache-kafka/)
+Reference: [Introducing Apache Kafka by Adam Mautner](https://imarcats.wordpress.com/2019/02/13/introducing-apache-kafka/)
 
 ## Installation
-Adam Mautner: [Installing Kafka using Docker](https://imarcats.wordpress.com/2019/02/13/installing-kafka-using-docker/)
+Reference: [Installing Kafka using Docker by Adam Mautner](https://imarcats.wordpress.com/2019/02/13/installing-kafka-using-docker/)
 
 I have slightly modified the `docker-compose.yml`. See in the folder: `kafkastudy\docker-compose\kafkastudy\`.
 
