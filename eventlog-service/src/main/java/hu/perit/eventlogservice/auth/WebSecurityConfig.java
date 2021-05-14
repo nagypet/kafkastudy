@@ -19,16 +19,13 @@ package hu.perit.eventlogservice.auth;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.StringUtils;
 
-import hu.perit.eventlogservice.rest.api.BookApi;
 import hu.perit.spvitamin.core.crypto.CryptoUtil;
 import hu.perit.spvitamin.spring.config.SecurityProperties;
 import hu.perit.spvitamin.spring.config.SysConfig;
@@ -81,12 +78,6 @@ public class WebSecurityConfig
             {
                 log.warn("admin user is disabled!");
             }
-
-            // A public user
-            auth.inMemoryAuthentication() //
-                .withUser("user") //
-                .password(passwordEncoder.encode("user")) //
-                .authorities("ROLE_" + Role.PUBLIC.name());
         }
 
 
@@ -98,30 +89,4 @@ public class WebSecurityConfig
                 .basicAuth();
         }
     }
-
-
-    /*
-     * ============== Order(2) =========================================================================================
-     */
-    @Configuration
-    @Order(2)
-    public static class Order2 extends WebSecurityConfigurerAdapter
-    {
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception
-        {
-            SimpleHttpSecurityBuilder.newInstance(http) //
-                .scope(BookApi.BASE_URL_BOOKS + "/**") //
-                .authorizeRequests() //                
-                .antMatchers(HttpMethod.GET, BookApi.BASE_URL_BOOKS + "/**").hasAuthority(Permissions.BOOK_READ_ACCESS.name()) //
-                .antMatchers(BookApi.BASE_URL_BOOKS + "/**").hasAuthority(Permissions.BOOK_WRITE_ACCESS.name()) //
-                .anyRequest().denyAll();
-
-            SimpleHttpSecurityBuilder.afterAuthorization(http).jwtAuth();
-
-            http.addFilterAfter(new PostAuthenticationFilter(), SessionManagementFilter.class);
-        }
-    }
-
 }
