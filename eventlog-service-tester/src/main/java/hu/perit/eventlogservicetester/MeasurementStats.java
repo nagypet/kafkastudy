@@ -58,13 +58,13 @@ public class MeasurementStats
     {
         if (!this.headerPrinted.getAndSet(true))
         {
-            log.info("+--------------------+--------+--------+--------+----------+--------------------+--------+--------+--------+");
-            log.info(String.format("|mode                |elapsed |success |failure | speed    |%-20s|average |max     |min     |",
+            log.info(              "+--------------------+--------+---------+--------+----------+--------------------+--------+--------+--------+");
+            log.info(String.format("|mode                |elapsed |success  |failure | speed    |%-20s|average |max     |min     |",
                 this.sizeMetricColumnTitle));
             log.info(String.format(
-                "|                    |        |pcs     |pcs     | call/min |                    |ms      |ms      |ms      |",
+                                   "|                    |        |pcs      |pcs     | call/min |                    |ms      |ms      |ms      |",
                 this.sizeMetricColumnTitle));
-            log.info("+--------------------+--------+--------+--------+----------+--------------------+--------+--------+--------+");
+            log.info(              "+--------------------+--------+---------+--------+----------+--------------------+--------+--------+--------+");
         }
 
         long current = timer.getTime(TimeUnit.SECONDS);
@@ -75,7 +75,7 @@ public class MeasurementStats
             int failure = this.documentCountFailure.get();
             int success = this.documentCountSuccess.get();
             long speed = (long) ((double) success / ((double) current / 60.0));
-            log.info(String.format("|%-20s|%s|%,8d|%,8d|%,10d|%,20d|%,8d|%,8d|%,8d|", this.mode, formatInterval(current), success, failure,
+            log.info(String.format("|%-20s|%s|%,9d|%,8d|%,10d|%,20d|%,8d|%,8d|%,8d|", this.mode, formatInterval(current), success, failure,
                 speed, this.sizeMetric.get(), this.execTime.getAverage().longValue(), this.execTime.getMax().longValue(),
                 this.execTime.getMin().longValue()));
         }
