@@ -277,3 +277,8 @@ The performance is awesome.
 
 The memory usage of the kafka container is a bit disappointing. I do not know if it ever releases the memory.
 ![](https://github.com/nagypet/kafkastudy/blob/main/doc/pics/kafka_memory_usage.jpg)
+
+## Further questions
+- Handshake & error handling
+- How can I automatically remove delivered messages
+- Memory consumption
