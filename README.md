@@ -256,3 +256,6 @@ public class KafkaListenerService
 ```
 
 Cool!
+
+## Monitoring the consumer with Prometheus/Grafana
+

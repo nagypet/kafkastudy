@@ -21,7 +21,6 @@ plugins {
 	id "com.github.ManifestClasspath" version "0.1.0-RELEASE"
 }
 apply from: '../gradle/common.gradle'
-apply from: '../gradle/docker.gradle'
 
 
 repositories {
