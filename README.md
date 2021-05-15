@@ -259,3 +259,19 @@ Cool!
 
 ## Monitoring the consumer with Prometheus/Grafana
 
+```
+c:\np\github\kafkastudy\docker-compose\kafkastudy>docker ps
+CONTAINER ID        IMAGE                                       COMMAND                  CREATED             STATUS                 PORTS                                                NAMES
+b483beec477c        kafkastudy-eventlog-service                 "sh ./eventlog-servi…"   20 minutes ago      Up 20 minutes          8080/tcp, 0.0.0.0:8400->8400/tcp                     kafkastudy-eventlog-service
+7758a4e62943        kafkastudy-grafana                          "/run.sh"                20 minutes ago      Up 20 minutes          0.0.0.0:3000->3000/tcp                               kafkastudy-grafana
+3f2dd567080e        kafkastudy-prometheus                       "/bin/prometheus --c…"   2 hours ago         Up 2 hours             0.0.0.0:9090->9090/tcp                               kafkastudy-prometheus
+0da08556e33e        prom/node-exporter:v0.18.1                  "/bin/node_exporter …"   2 hours ago         Up 2 hours             0.0.0.0:9100->9100/tcp                               kafkastudy-nodeexporter
+4550bc961c68        gcr.io/google-containers/cadvisor:v0.36.0   "/usr/bin/cadvisor -…"   2 hours ago         Up 2 hours (healthy)   0.0.0.0:8080->8080/tcp                               kafkastudy-cadvisor
+1e6421de65c1        wurstmeister/kafka:latest                   "start-kafka.sh"         2 hours ago         Up 2 hours             0.0.0.0:9092->9092/tcp                               kafkastudy-kafka
+14665f98c50c        wurstmeister/zookeeper                      "/bin/sh -c '/usr/sb…"   2 hours ago         Up 2 hours             22/tcp, 2888/tcp, 3888/tcp, 0.0.0.0:2181->2181/tcp   kafkastudy-zookeper
+```
+The performance is awesome.
+![](https://github.com/nagypet/kafkastudy/blob/main/doc/pics/eventlog-service.jpg)
+
+The memory usage of the kafka container is a bit disappointing. I do not know if it ever releases the memory.
+![](https://github.com/nagypet/kafkastudy/blob/main/doc/pics/kafka_memory_usage.jpg)
