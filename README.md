@@ -1,5 +1,7 @@
 # kafkastudy
 
+For demo purposes we will build an eventlog service, which is basically a spring boot application listening on a Kafka topic. The performance tester is also a spring boot app, but this one is a command line runner, which publishes messages in 30 threads.
+
 ## Introduction
 Reference: [Introducing Apache Kafka by Adam Mautner](https://imarcats.wordpress.com/2019/02/13/introducing-apache-kafka/)
 
