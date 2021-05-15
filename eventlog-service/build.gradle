@@ -65,6 +65,9 @@ dependencies {
     // Slf4J
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
 	
+	// Kafka
+	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.0'
+		
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
