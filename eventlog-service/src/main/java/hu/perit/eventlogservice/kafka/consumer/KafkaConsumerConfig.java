@@ -13,6 +13,8 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 
+import hu.perit.eventlogservice.kafka.KafkaProperties;
+
 @EnableKafka
 @Configuration
 public class KafkaConsumerConfig
