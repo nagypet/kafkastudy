@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import hu.perit.eventlogservicetester.config.TesterProperties;
+import hu.perit.eventlogservicetester.kafka.KafkaProperties;
 import hu.perit.spvitamin.core.StackTracer;
 import hu.perit.spvitamin.core.batchprocessing.BatchJob;
 import hu.perit.spvitamin.core.batchprocessing.BatchProcessor;
@@ -24,7 +26,7 @@ public class Runner extends BatchProcessor implements CommandLineRunner
 
     private final TesterProperties testerProperties;
 
-    public Runner(TesterProperties testerProperties)
+    public Runner(TesterProperties testerProperties, KafkaProperties kafkaProperties, KafkaTemplate<String, String> kafkaTemplate)
     {
         super(testerProperties.getThreadCount());
         this.testerProperties = testerProperties;

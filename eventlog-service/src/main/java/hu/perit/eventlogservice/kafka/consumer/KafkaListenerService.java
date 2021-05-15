@@ -18,9 +18,11 @@ public class KafkaListenerService
     @KafkaListener(topics = "eventlog", groupId = "group-01")
     public void listenToEventLogTopic(@Payload List<String> messages, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition)
     {
-        for (String message : messages)
-        {
-            log.debug("Received Kafka message: " + message);
-        }
+        log.debug(String.format("Received %d Kafka message", messages.size()));
+        
+//        for (String message : messages)
+//        {
+//            log.debug("Received Kafka message: " + message);
+//        }
     }
 }

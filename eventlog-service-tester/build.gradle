@@ -59,8 +59,11 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
     implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.3'
 
-    // Log4J
-    implementation('log4j:log4j:1.2.17')
+    // Slf4J
+	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+
+	// Kafka
+	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.0'
 
     // Test framework
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
