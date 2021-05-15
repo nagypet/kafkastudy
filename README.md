@@ -65,3 +65,66 @@ Author: Peter Nagy <nagy.peter.home@gmail.com>
 2021-05-15 06:57:32.698 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  19 : Received Kafka message: hello 
 2021-05-15 06:57:36.258 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  19 : Received Kafka message: szia 
 ```
+
+## Batch processing on the consumer side
+
+In order to speed up processing, we will use batch delivery on the consumer side.
+
+```
+@EnableKafka
+@Configuration
+public class KafkaConsumerConfig
+{
+    @Autowired
+    private KafkaProperties kafkaProperties;
+    
+    @Bean
+    public ConsumerFactory<String, String> consumerFactory()
+    {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaProperties.getGroupId());
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(props);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory()
+    {
+
+        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        factory.setBatchListener(true); <== Insert this!!!
+        return factory;
+    }
+}
+```
+
+Change the payload to a List of objects:
+```
+@Component
+@Slf4j
+public class KafkaListenerService
+{
+
+    @KafkaListener(topics = "eventlog", groupId = "group-01")
+    public void listenToEventLogTopic(@Payload List<String> messages, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition)
+    {
+        for (String message : messages)
+        {
+            log.debug("Received Kafka message: " + message);
+        }
+    }
+}
+```
+
+Now if you stop the consumer app and keep pushing some new messages, these will be delivered at once, instead of single messages.
+```
+2021-05-15 07:52:46.202 INFO  SPR [main           ] o.s.b.w.e.t.TomcatWebServer    220 : Tomcat started on port(s): 8400 (https) with context path '' 
+2021-05-15 07:52:46.350 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  23 : Received Kafka message: alma 
+2021-05-15 07:52:46.351 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  23 : Received Kafka message: körte 
+2021-05-15 07:52:46.351 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  23 : Received Kafka message: szilva 
+2021-05-15 07:52:46.351 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  23 : Received Kafka message: barack 
+```
+
