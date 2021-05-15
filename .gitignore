@@ -28,7 +28,7 @@ spvitamin
 .gradle
 build
 eventlog-service/bin
-webservice-api/bin
+eventlog-service-tester/bin
 out
 polc
 distributions

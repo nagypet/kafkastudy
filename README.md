@@ -66,6 +66,8 @@ Author: Peter Nagy <nagy.peter.home@gmail.com>
 2021-05-15 06:57:36.258 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  19 : Received Kafka message: szia 
 ```
 
+Interesting, that default settings seem to mimic delivery semantics 'exactly ones'. If I stop the application for a while, only new messages will be delivered the next time the consumer is started. This has to be analysed and tested more detailled.
+
 ## Batch processing on the consumer side
 
 In order to speed up processing, we will use batch delivery on the consumer side.
@@ -127,4 +129,6 @@ Now if you stop the consumer app and keep pushing some new messages, these will 
 2021-05-15 07:52:46.351 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  23 : Received Kafka message: szilva 
 2021-05-15 07:52:46.351 DEBUG --- [ntainer#0-0-C-1] h.p.e.k.c.KafkaListenerService  23 : Received Kafka message: barack 
 ```
+
+### Creating a performance tester application
 
