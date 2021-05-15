@@ -49,7 +49,7 @@ Application log:
                                         project
 
 AdoptOpenJDK 11.0.9.1+1
-Spring-Boot: 2.3.2.RELEASE
+Spring-Boot: 2.4.5
 : 
 
 Author: Peter Nagy <nagy.peter.home@gmail.com>
