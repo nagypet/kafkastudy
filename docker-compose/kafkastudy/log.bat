@@ -1,2 +1,2 @@
 @echo off
-docker logs --follow %1
+docker logs --follow %2 %3 %4 kafkastudy-%1

@@ -36,6 +36,8 @@ services:
             # Put 127.0.0.1 kafka into your hosts file
             KAFKA_ADVERTISED_HOST_NAME: kafka
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            # Keep 1 GB of messages
+            KAFKA_LOG_RETENTION_BYTES: 1073741824
         ports:
             - "9092:9092"
             #- target: 9094
@@ -47,6 +49,51 @@ services:
         networks: 
             - back-tier-net
         hostname: kafka
+
+
+    #####################################################################################                 
+    kafka-ui:
+    #####################################################################################                 
+        container_name: kafkastudy-kafka-ui
+        image: provectuslabs/kafka-ui
+        ports:
+          - "5500:8080"
+        restart: always
+        environment:
+          - KAFKA_CLUSTERS_0_NAME=local
+          - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+          - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+        networks: 
+            - back-tier-net
+        hostname: kafka-ui
+
+
+    ######################################################################################                 
+    #burrow:
+    ######################################################################################                 
+    #    container_name: kafkastudy-burrow
+    #    image: "burrow_burrow:latest"
+    #    ports:
+    #      - 8501:8000
+    #    depends_on:
+    #      - zookeeper
+    #      - kafka
+    #    restart: always
+    #    networks: 
+    #        - back-tier-net
+    #
+    #
+    ######################################################################################                 
+    #burrow-dashboard:
+    ######################################################################################                 
+    #    container_name: kafkastudy-burrow-dashboard
+    #    image: "joway/burrow-dashboard:latest"
+    #    ports: 
+    #        - "5502:80"
+    #    environment:  
+    #        - BURROW_BACKEND=http://burrow:8000
+    #    networks: 
+    #        - back-tier-net
 
 
     #####################################################################################                 

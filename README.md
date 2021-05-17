@@ -278,6 +278,33 @@ The performance is awesome.
 The memory usage of the kafka container is a bit disappointing. I do not know if it ever releases the memory.
 ![](https://github.com/nagypet/kafkastudy/blob/main/doc/pics/kafka_memory_usage.jpg)
 
+## Max retention size
+
+```
+KAFKA_LOG_RETENTION_BYTES: 1073741824
+```
+
+## Kafka-UI
+
+```
+#####################################################################################                 
+kafka-ui:
+#####################################################################################                 
+	container_name: kafkastudy-kafka-ui
+	image: provectuslabs/kafka-ui
+	ports:
+	  - "5500:8080"
+	restart: always
+	environment:
+	  - KAFKA_CLUSTERS_0_NAME=local
+	  - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+	  - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+	networks: 
+		- back-tier-net
+	hostname: kafka-ui
+```
+
+
 ## Further questions
 - Handshake & error handling
 - How can I automatically remove delivered messages
