@@ -87,6 +87,9 @@ dependencies {
     // YAML formatting
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 
+    // Micrometer Prometheus plugin
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.5.3'
+	
     // Slf4J
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
 	

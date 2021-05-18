@@ -1,4 +1,4 @@
-package hu.perit.eventlogservicetester.kafka.consumermonitor;
+package hu.perit.eventlogservicetester.kafka.consumer.monitor;
 
 import java.util.List;
 import java.util.Map;
@@ -13,23 +13,47 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.stereotype.Service;
 
 import hu.perit.eventlogservicetester.kafka.KafkaProperties;
+import hu.perit.spvitamin.core.timeoutlatch.TimeoutLatch;
 import hu.perit.spvitamin.spring.config.SpringContext;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Service
 public class KafkaConsumerMonitor
 {
+    private Long currentConsumerLag = 0L;
+    private TimeoutLatch timeoutLatch = new TimeoutLatch(5000L);
 
-    @Getter
-    @RequiredArgsConstructor
-    public static class PartionOffsets
+    private final ThreadLocal<KafkaConsumer<?, ?>> threadLocalConsumer = new ThreadLocal<>()
     {
-        private final long endOffset;
-        private final long currentOffset;
-        private final int partion;
-        private final String topic;
+        protected KafkaConsumer<?, ?> initialValue()
+        {
+            KafkaProperties kafkaProperties = SpringContext.getBean(KafkaProperties.class);
+            return createNewConsumer(kafkaProperties.getBootstrapServers(), kafkaProperties.getGroupId());
+        }
+    };
+
+
+    /**
+     * 
+     * @return
+     */
+    public synchronized long getConsumerLag()
+    {
+        if (timeoutLatch.isOpen())
+        {
+            this.timeoutLatch.setClosed();
+
+            Map<TopicPartition, PartionOffsets> offsets = getConsumerGroupOffsets();
+
+            this.currentConsumerLag = offsets.values().stream() //
+                .map(po -> (po.endOffset - po.currentOffset)).collect(Collectors.summingLong(Long::longValue));
+        }
+
+        return this.currentConsumerLag;
     }
 
 
@@ -42,37 +66,24 @@ public class KafkaConsumerMonitor
     {
         KafkaProperties kafkaProperties = SpringContext.getBean(KafkaProperties.class);
 
-        KafkaConsumer<?, ?> consumer = createNewConsumer(kafkaProperties.getBootstrapServers(), kafkaProperties.getGroupId());
+        Map<TopicPartition, Long> logEndOffset = getLogEndOffset(threadLocalConsumer.get(), kafkaProperties.getTopic());
 
-        try
-        {
+        BinaryOperator<PartionOffsets> mergeFunction = (a, b) -> {
+            throw new IllegalStateException();
+        };
 
-            Map<TopicPartition, Long> logEndOffset = getLogEndOffset(consumer, kafkaProperties.getTopic());
+        Map<TopicPartition, OffsetAndMetadata> commitedOffsets = threadLocalConsumer.get().committed(logEndOffset.keySet());
 
-            BinaryOperator<PartionOffsets> mergeFunction = (a, b) -> {
-                throw new IllegalStateException();
-            };
+        Map<TopicPartition, PartionOffsets> result = logEndOffset.entrySet().stream() //
+            .collect(Collectors.toMap( //
+                entry -> (entry.getKey()), //
+                entry -> {
+                    OffsetAndMetadata committedOffset = commitedOffsets.get(entry.getKey());
+                    return new PartionOffsets(entry.getValue(), committedOffset != null ? committedOffset.offset() : 0,
+                        entry.getKey().partition(), kafkaProperties.getTopic());
+                }, mergeFunction));
 
-            Map<TopicPartition, OffsetAndMetadata> commitedOffsets = consumer.committed(logEndOffset.keySet());
-
-            Map<TopicPartition, PartionOffsets> result = logEndOffset.entrySet().stream() //
-                .collect(Collectors.toMap( //
-                    entry -> (entry.getKey()), //
-                    entry -> {
-                        OffsetAndMetadata committedOffset = commitedOffsets.get(entry.getKey());
-                        return new PartionOffsets(entry.getValue(), committedOffset != null ? committedOffset.offset() : 0, entry.getKey().partition(),
-                            kafkaProperties.getTopic());
-                    }, mergeFunction));
-
-            return result;
-        }
-        finally
-        {
-            if (consumer != null)
-            {
-                consumer.close();
-            }
-        }
+        return result;
     }
 
 
@@ -98,5 +109,16 @@ public class KafkaConsumerMonitor
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         return new KafkaConsumer<>(properties);
+    }
+
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class PartionOffsets
+    {
+        private final long endOffset;
+        private final long currentOffset;
+        private final int partion;
+        private final String topic;
     }
 }

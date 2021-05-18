@@ -26,6 +26,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 
+import hu.perit.eventlogservice.rest.api.ConsumerSettingsApi;
 import hu.perit.spvitamin.core.crypto.CryptoUtil;
 import hu.perit.spvitamin.spring.config.SecurityProperties;
 import hu.perit.spvitamin.spring.config.SysConfig;
@@ -85,8 +86,15 @@ public class WebSecurityConfig
         protected void configure(HttpSecurity http) throws Exception
         {
             SimpleHttpSecurityBuilder.newInstance(http) //
-                .scope(AuthApi.BASE_URL_AUTHENTICATE + "/**") //
-                .basicAuth();
+                .scope( //
+                    AuthApi.BASE_URL_AUTHENTICATE + "/**", //
+                    ConsumerSettingsApi.BASE_URL_CONSUMER + "/**" //
+                ) //
+                .authorizeRequests() //                
+                .antMatchers(AuthApi.BASE_URL_AUTHENTICATE + "/**").fullyAuthenticated() //
+                .anyRequest().permitAll();
+
+            SimpleHttpSecurityBuilder.afterAuthorization(http).basicAuth();
         }
     }
 }

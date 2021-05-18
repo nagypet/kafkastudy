@@ -5,15 +5,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 import hu.perit.eventlogservicetester.config.TesterProperties;
 import hu.perit.eventlogservicetester.kafka.KafkaProperties;
-import hu.perit.eventlogservicetester.kafka.consumermonitor.KafkaConsumerMonitor;
-import hu.perit.eventlogservicetester.kafka.consumermonitor.KafkaConsumerMonitor.PartionOffsets;
+import hu.perit.eventlogservicetester.kafka.consumer.monitor.KafkaConsumerMonitor;
+import hu.perit.eventlogservicetester.kafka.consumer.monitor.KafkaConsumerMonitor.PartionOffsets;
 import hu.perit.spvitamin.core.StackTracer;
 import hu.perit.spvitamin.core.batchprocessing.BatchJob;
 import hu.perit.spvitamin.core.batchprocessing.BatchProcessor;
@@ -43,9 +48,6 @@ public class Runner extends BatchProcessor implements CommandLineRunner
 
         long startMillis = System.currentTimeMillis();
 
-        KafkaConsumerMonitor monitor = new KafkaConsumerMonitor();
-        Map<TopicPartition, PartionOffsets> consumerGroupOffsets = monitor.getConsumerGroupOffsets();
-        
         while (!Thread.currentThread().isInterrupted()
             && ((System.currentTimeMillis() - startMillis) / 60000 < this.testerProperties.getDurationMins()))
         {

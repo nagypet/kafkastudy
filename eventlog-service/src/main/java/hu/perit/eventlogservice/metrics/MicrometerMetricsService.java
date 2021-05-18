@@ -12,6 +12,7 @@ import org.springframework.boot.actuate.health.Status;
 import org.springframework.stereotype.Service;
 
 import hu.perit.eventlogservice.config.Constants;
+import hu.perit.eventlogservice.kafka.consumer.monitor.KafkaConsumerMonitor;
 import hu.perit.spvitamin.core.exception.UnexpectedConditionException;
 import hu.perit.spvitamin.spring.metrics.DualMetric;
 import io.micrometer.core.instrument.Gauge;
@@ -29,12 +30,19 @@ public class MicrometerMetricsService
 
     private DualMetric metricMessageReceived;
 
-    public MicrometerMetricsService(MeterRegistry registry, HealthContributorRegistry healthContributorRegistry)
+    public MicrometerMetricsService(MeterRegistry registry, HealthContributorRegistry healthContributorRegistry, KafkaConsumerMonitor kafkaConsumerMonitor)
     {
+        final String METRIC_CONSUMER_LAG = Constants.SUBSYSTEM_NAME.toLowerCase() + ".consumerlag";
         final String METRIC_HEALTH = Constants.SUBSYSTEM_NAME.toLowerCase() + ".health";
 
+        // Messages received
         this.metricMessageReceived = new DualMetric(registry, Constants.SUBSYSTEM_NAME.toLowerCase(), "messagereceived");
 
+        // Consumer lag
+        Gauge.builder(METRIC_CONSUMER_LAG, kafkaConsumerMonitor, KafkaConsumerMonitor::getConsumerLag).description(
+            "The current consumer lag").baseUnit("pcs").register(registry);
+
+        // Health
         indicators = healthContributorRegistry.stream() //
             .map(c -> this.getIndicatorFromContributor(c)) //
             .collect(Collectors.toList());

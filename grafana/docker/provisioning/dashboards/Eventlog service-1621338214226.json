@@ -420,17 +420,27 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "system_cpu_usage*100",
+          "expr": "eventlog_service_consumerlag_pcs",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "thresholds": [],
+      "thresholds": [
+        {
+          "$$hashKey": "object:220",
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 100000,
+          "yaxis": "left"
+        }
+      ],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "System CPU usage",
+      "title": "Consumer lag",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -447,7 +457,7 @@
       "yaxes": [
         {
           "$$hashKey": "object:1103",
-          "format": "percent",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -478,7 +488,7 @@
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -501,5 +511,5 @@
   "variables": {
     "list": []
   },
-  "version": 10
+  "version": 822
 }
