@@ -1,6 +1,6 @@
 # kafkastudy
 
-For demo purposes we will build an eventlog service, which is basically a spring boot application listening on a Kafka topic. The performance tester is also a spring boot app, but this one is a command line runner, which publishes messages in 30 threads.
+For demo purposes we will build an eventlog service, which is basically a spring boot application listening on a Kafka topic. The performance tester is also a spring boot app, but this one is a command line runner, which publishes messages in 30 threads. I have choosen this use case consciously, where a message queue pattern would be more appropriate to see, if a message-queue-like behaviour can be implemented with Kafka. Of course we also need DEO (Delivery Exactly Once) semantics.
 
 ## Introduction
 Reference: [Introducing Apache Kafka by Adam Mautner](https://imarcats.wordpress.com/2019/02/13/introducing-apache-kafka/)
@@ -304,6 +304,171 @@ kafka-ui:
 	hostname: kafka-ui
 ```
 
+
+## Flow control between the publisher and the consumer
+
+Kafka is based on a publish-and-forget principle. The publisher will keep sending messages regardless of the messages were already processed by the consumer. If the log is full, oldest messages will be deleted even if they were never consumed. Of course for an event log service this is not acceptable. For implementing a message-queue-like behavour we need the followings:
+- Flow control: publisher must stop sending new messages if the log is full
+- Acknowledge on the publisher side
+- Good quality commit mechanism on the consumer side to ensure DEO semantics
+
+Flow control can be implemented by calculating the consumer lag of a topic. The lag is the difference between log-end-offset and committed-offset by the consumer. If the publisher is sending with a much higher rate, then the consumer is able to process, the lag will increase continually. 
+
+### KafkaConsumerMonitor Service
+
+This service deliveres the consumer lag on the publisher side.
+
+```
+@Service
+public class KafkaConsumerMonitor
+{
+    private Long currentConsumerLag = 0L;
+    private TimeoutLatch timeoutLatch = new TimeoutLatch(5000L);
+
+    private final ThreadLocal<KafkaConsumer<?, ?>> threadLocalConsumer = new ThreadLocal<>()
+    {
+        protected KafkaConsumer<?, ?> initialValue()
+        {
+            KafkaProperties kafkaProperties = SpringContext.getBean(KafkaProperties.class);
+            return createNewConsumer(kafkaProperties.getBootstrapServers(), kafkaProperties.getGroupId());
+        }
+    };
+
+
+    /**
+     * 
+     * @return
+     */
+    public synchronized long getConsumerLag()
+    {
+        if (timeoutLatch.isOpen())
+        {
+            this.timeoutLatch.setClosed();
+
+            Map<TopicPartition, PartionOffsets> offsets = getConsumerGroupOffsets();
+
+            this.currentConsumerLag = offsets.values().stream() //
+                .map(po -> (po.endOffset - po.currentOffset)).collect(Collectors.summingLong(Long::longValue));
+        }
+
+        return this.currentConsumerLag;
+    }
+
+
+    /**
+     * getConsumerGroupOffsets()
+     * 
+     * @return Map<TopicPartition, PartionOffsets>
+     */
+    public Map<TopicPartition, PartionOffsets> getConsumerGroupOffsets()
+    {
+        KafkaProperties kafkaProperties = SpringContext.getBean(KafkaProperties.class);
+
+        Map<TopicPartition, Long> logEndOffset = getLogEndOffset(threadLocalConsumer.get(), kafkaProperties.getTopic());
+
+        BinaryOperator<PartionOffsets> mergeFunction = (a, b) -> {
+            throw new IllegalStateException();
+        };
+
+        Map<TopicPartition, OffsetAndMetadata> commitedOffsets = threadLocalConsumer.get().committed(logEndOffset.keySet());
+
+        Map<TopicPartition, PartionOffsets> result = logEndOffset.entrySet().stream() //
+            .collect(Collectors.toMap( //
+                entry -> (entry.getKey()), //
+                entry -> {
+                    OffsetAndMetadata committedOffset = commitedOffsets.get(entry.getKey());
+                    return new PartionOffsets(entry.getValue(), committedOffset != null ? committedOffset.offset() : 0,
+                        entry.getKey().partition(), kafkaProperties.getTopic());
+                }, mergeFunction));
+
+        return result;
+    }
+
+
+    private Map<TopicPartition, Long> getLogEndOffset(KafkaConsumer<?, ?> consumer, String topic)
+    {
+        Map<TopicPartition, Long> endOffsets = new ConcurrentHashMap<>();
+        List<PartitionInfo> partitionInfoList = consumer.partitionsFor(topic);
+        List<TopicPartition> topicPartitions = partitionInfoList.stream().map(pi -> new TopicPartition(topic, pi.partition())).collect(
+            Collectors.toList());
+        consumer.assign(topicPartitions);
+        consumer.seekToEnd(topicPartitions);
+        topicPartitions.forEach(topicPartition -> endOffsets.put(topicPartition, consumer.position(topicPartition)));
+        return endOffsets;
+    }
+
+
+    private static KafkaConsumer<?, ?> createNewConsumer(String bootstrapServers, String groupId)
+    {
+        Properties properties = new Properties();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new KafkaConsumer<>(properties);
+    }
+
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class PartionOffsets
+    {
+        private final long endOffset;
+        private final long currentOffset;
+        private final int partion;
+        private final String topic;
+    }
+}
+```
+
+The publisher works like this:
+
+```
+    protected Boolean execute() throws Exception
+    {
+        try (Took took = new Took(false))
+        {
+            String processID = UUID.randomUUID().toString();
+            KafkaProperties kafkaProperties = SpringContext.getBean(KafkaProperties.class);
+            KafkaTemplate<String, String> kafkaTemplate = SpringContext.getBean(KafkaTemplate.class);
+
+            KafkaConsumerMonitor monitor = SpringContext.getBean(KafkaConsumerMonitor.class);
+            if (monitor.getConsumerLag() < 100_000)
+            {
+                ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(kafkaProperties.getTopic(), processID);
+
+                // Waiting for the acknowledge from Kafka...
+                future.get(kafkaProperties.getSendTimeoutSeconds(), TimeUnit.SECONDS);
+
+                this.stats.incrementSuccessCount();
+                this.stats.pushExecTimeMillis(took.getDuration());
+                this.stats.logIt();
+            }
+            else
+            {
+                TimeUnit.SECONDS.sleep(1);
+                this.stats.incrementFailureCount();
+                this.stats.logIt();
+            }
+            return null; // NOSONAR
+        }
+        catch (Exception ex)
+        {
+            this.stats.incrementFailureCount();
+            this.stats.logIt();
+            throw ex;
+        }
+    }
+```
+
+And this is working just great! I have implemented a REST endpoint for setting consumer processing delay in the eventlog-service. I have tested with 0ms, 10ms, 50ms, 40ms and 20ms delays. See the results:
+
+![](https://github.com/nagypet/kafkastudy/blob/main/doc/pics/eventlog-service_with_puback_and_lagcontrol.jpg)
+
+What we can observe:
+- The CPU load is higher if we run without any delay. This is because the listener polls Kafka continously.
+- With 50ms delay, the lag jumps up to the 100.000 threadhold, sometimes it even get higher. This is because our monitor deliveres a new lag value only in every 5 seconds, and obviously within this 5 seconds the publisher is able to send another 50.000 messages to Kafka. But its not a problem, with the current maximal log size (1GB) the log can contain up to 30 millions of messages.
 
 ## Further questions
 - Handshake & error handling
