@@ -18,6 +18,7 @@ public class KafkaProperties
     private String bootstrapServers = "kafka:9092";
     private String groupId = "group-01";
     private String topic;
+    private int sendTimeoutSeconds = 10;
     
     @PostConstruct
     private void postConstruct()

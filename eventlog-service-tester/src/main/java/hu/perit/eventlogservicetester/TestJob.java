@@ -1,8 +1,11 @@
 package hu.perit.eventlogservicetester;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import hu.perit.eventlogservicetester.kafka.KafkaProperties;
 import hu.perit.spvitamin.core.batchprocessing.BatchJob;
@@ -30,8 +33,12 @@ public class TestJob extends BatchJob
             String processID = UUID.randomUUID().toString();
             KafkaProperties kafkaProperties = SpringContext.getBean(KafkaProperties.class);
             KafkaTemplate<String, String> kafkaTemplate = SpringContext.getBean(KafkaTemplate.class);
-
-            kafkaTemplate.send(kafkaProperties.getTopic(), processID);
+            
+            ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(kafkaProperties.getTopic(), processID);
+            
+            // Waiting for the result of the send operation. This result signals if the message has been successfully
+            // sent to Kafka. There is nothing about delivery...
+            future.get(kafkaProperties.getSendTimeoutSeconds(), TimeUnit.SECONDS);
 
             this.stats.incrementSuccessCount();
             this.stats.pushExecTimeMillis(took.getDuration());

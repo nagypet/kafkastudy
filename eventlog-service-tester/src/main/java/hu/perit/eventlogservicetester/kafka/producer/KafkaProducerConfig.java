@@ -3,12 +3,14 @@ package hu.perit.eventlogservicetester.kafka.producer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -33,9 +35,20 @@ public class KafkaProducerConfig
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
-    
+
     @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
+    public KafkaTemplate<String, String> kafkaTemplate()
+    {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+
+    @Bean
+    public NewTopic topic()
+    {
+        return TopicBuilder.name(kafkaProperties.getTopic()) //
+            .partitions(10) //
+            .replicas(1) //
+            .build();
     }
 }
