@@ -470,7 +470,6 @@ What we can observe:
 - The CPU load is higher if we run without any delay. This is because the listener polls Kafka continously.
 - With 50ms delay, the lag jumps up to the 100.000 threadhold, sometimes it even get higher. This is because our monitor deliveres a new lag value only in every 5 seconds, and obviously within this 5 seconds the publisher is able to send another 50.000 messages to Kafka. But its not a problem, with the current maximal log size (1GB) the log can contain up to 30 millions of messages.
 
-## Further questions
-- Handshake & error handling
-- How can I automatically remove delivered messages
+## Open questions
+- Commiting offsets on the consumer side
 - Memory consumption
