@@ -24,6 +24,7 @@ plugins {
 ext {
 	// Itt will be used to prefix docker image name
 	set('imagePrefix', 'kafkastudy')
+	set('spvitaminVersion', '1.1.0-RELEASE')
 }
 
 apply from: '../gradle/common.gradle'
@@ -35,6 +36,9 @@ repositories {
     mavenCentral()
     flatDir {
         dirs '../gradle/localrepo'
+    }
+	maven {
+        url "http://perit.hu/maven"
     }
 }
 
@@ -49,11 +53,6 @@ application {
 sourceCompatibility = 11
 
 dependencies {
-	compile project(':spvitamin-core')		
-	compile project(':spvitamin-spring-server')
-	compile project(':spvitamin-spring-admin')
-	compile project(':spvitamin-spring-security')
-		
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
@@ -67,6 +66,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     
+	// Spvitamin
+	implementation 'hu.perit.spvitamin:spvitamin-core'
+	implementation 'hu.perit.spvitamin:spvitamin-spring-server'
+	implementation 'hu.perit.spvitamin:spvitamin-spring-admin'
+	implementation 'hu.perit.spvitamin:spvitamin-spring-security'
+				
     // JJWT
     implementation group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
 
@@ -95,8 +100,15 @@ dependencies {
 	
 	// Kafka
 	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.0'
-		
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+
+dependencyManagement {
+    imports {
+        mavenBom "hu.perit.spvitamin:spvitamin-dependencies:${spvitaminVersion}"
+    }
 }
 
 

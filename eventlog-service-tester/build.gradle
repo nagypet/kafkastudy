@@ -23,11 +23,19 @@ plugins {
 apply from: '../gradle/common.gradle'
 
 
+ext {
+	set('spvitaminVersion', '1.1.0-RELEASE')
+}
+
+
 repositories {
     jcenter()
     mavenCentral()
     flatDir {
         dirs '../gradle/localrepo'
+    }
+	maven {
+        url "http://perit.hu/maven"
     }
 }
 
@@ -42,9 +50,6 @@ application {
 sourceCompatibility = 11
 
 dependencies {
-	compile project(':spvitamin-core')
-	compile project(':spvitamin-spring-general')
-
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
@@ -53,6 +58,10 @@ dependencies {
 
 	// Spring Boot
 	implementation 'org.springframework.boot:spring-boot-starter'
+
+	// Spvitamin
+	implementation 'hu.perit.spvitamin:spvitamin-core'
+	implementation 'hu.perit.spvitamin:spvitamin-spring-general'
 
     // apache.commons
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
@@ -67,6 +76,13 @@ dependencies {
     // Test framework
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+
+
+dependencyManagement {
+    imports {
+        mavenBom "hu.perit.spvitamin:spvitamin-dependencies:${spvitaminVersion}"
     }
 }
 
