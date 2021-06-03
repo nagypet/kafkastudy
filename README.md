@@ -2,6 +2,62 @@
 
 For demo purposes we will build an eventlog service, which is basically a spring boot application listening on a Kafka topic. The performance tester is also a spring boot app, but this one is a command line runner, which publishes messages in 30 threads. I have choosen this use case consciously, where a message queue pattern would be more appropriate to see, if a message-queue-like behaviour can be implemented with Kafka. Of course we also need DEO (Delivery Exactly Once) semantics.
 
+## Cloning the repository
+
+`git clone https://github.com/nagypet/kafkastudy.git`
+
+## Building the project
+
+Rebuild docker images:
+
+`c:\np\github\kafkastudy>gradlew doI`
+
+## Start containers
+
+Open a command line, change to `kafkastudy\docker-compose\kafkastudy`.
+
+```
+c:\np\github\kafkastudy\docker-compose\kafkastudy>coU --all
+Creating kafkastudy-kafka ... done
+Creating kafkastudy-zookeper ... done
+Creating kafkastudy-kafka-ui ... done
+kafkastudy-kafka is up-to-date
+kafkastudy-zookeper is up-to-date
+kafkastudy-kafka-ui is up-to-date
+Creating kafkastudy-eventlog-service ... done
+Creating kafkastudy-prometheus ... done
+Creating kafkastudy-nodeexporter ... done
+Creating kafkastudy-cadvisor ... done
+kafkastudy-prometheus is up-to-date
+Creating kafkastudy-grafana ... done
+
+c:\np\github\kafkastudy\docker-compose\kafkastudy>docker ps
+CONTAINER ID        IMAGE                                       COMMAND                  CREATED             STATUS                   PORTS                                                NAMES
+841c6f9b420a        kafkastudy-grafana                          "/run.sh"                4 minutes ago       Up 4 minutes             0.0.0.0:3000->3000/tcp                               kafkastudy-grafana
+17fba5e023c6        gcr.io/google-containers/cadvisor:v0.36.0   "/usr/bin/cadvisor -…"   4 minutes ago       Up 4 minutes (healthy)   0.0.0.0:8080->8080/tcp                               kafkastudy-cadvisor
+630cd29b4df3        prom/node-exporter:v0.18.1                  "/bin/node_exporter …"   4 minutes ago       Up 4 minutes             0.0.0.0:9100->9100/tcp                               kafkastudy-nodeexporter
+be19fc81ef8f        kafkastudy-prometheus                       "/bin/prometheus --c…"   4 minutes ago       Up 4 minutes             0.0.0.0:9090->9090/tcp                               kafkastudy-prometheus
+e8047e73390f        kafkastudy-eventlog-service                 "sh ./eventlog-servi…"   4 minutes ago       Up 4 minutes             8080/tcp, 0.0.0.0:8400->8400/tcp                     kafkastudy-eventlog-service
+71e9806191da        provectuslabs/kafka-ui                      "/bin/sh -c 'java -j…"   4 minutes ago       Up 4 minutes             0.0.0.0:5500->8080/tcp                               kafkastudy-kafka-ui
+0770fc7cc5b5        wurstmeister/zookeeper                      "/bin/sh -c '/usr/sb…"   4 minutes ago       Up 4 minutes             22/tcp, 2888/tcp, 3888/tcp, 0.0.0.0:2181->2181/tcp   kafkastudy-zookeper
+4b59557b064a        wurstmeister/kafka:latest                   "start-kafka.sh"         4 minutes ago       Up 4 minutes             0.0.0.0:9092->9092/tcp                               kafkastudy-kafka
+```
+
+Check the log of the eventlog-service:
+
+`c:\np\github\kafkastudy\docker-compose\kafkastudy>log eventlog-service`
+
+Open your browser and check if the eventlog-service is up and running:
+
+`https://localhost:8400/`
+
+Now open grafana in `http://localhost:3000` and check the `Eventlog service` dashboard.
+
+## Starting the tester
+
+Open a new command line, change to the folder `eventlog-service-tester` and type in `gradlew run`.
+
+
 ## Introduction
 Reference: [Introducing Apache Kafka by Adam Mautner](https://imarcats.wordpress.com/2019/02/13/introducing-apache-kafka/)
 
