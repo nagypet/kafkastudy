@@ -1,18 +1,24 @@
 # kafkastudy
 
-For demo purposes we will build an eventlog service, which is basically a spring boot application listening on a Kafka topic. The performance tester is also a spring boot app, but this one is a command line runner, which publishes messages in 30 threads. I have choosen this use case consciously, where a message queue pattern would be more appropriate to see, if a message-queue-like behaviour can be implemented with Kafka. Of course we also need DEO (Delivery Exactly Once) semantics.
+For demo purposes we will build an eventlog service, using Kafka. I have choosen this use case consciously, where a message queue pattern would be more appropriate to see, if a message-queue-like behaviour can be implemented with Kafka. For achieve our goal, we need two things:
+- Flow control
+- DEO (Delivery Exactly Once) semantics.
 
-## Cloning the repository
+The `eventlog-service` is basically a spring boot application listening on a Kafka topic. The performance tester is also a spring boot app, but this one is a command line runner, which publishes messages in 30 threads.
+
+I will focus on the flow-control part, because I did not find any article on this, while there are tons of articles about implementing DEO.
+
+## Quick start
+
+### Clone the repository
 
 `git clone https://github.com/nagypet/kafkastudy.git`
 
-## Building the project
-
-Rebuild docker images:
+### Rebuild docker images
 
 `c:\np\github\kafkastudy>gradlew doI`
 
-## Start containers
+### Start containers
 
 Open a command line, change to `kafkastudy\docker-compose\kafkastudy`.
 
@@ -53,7 +59,7 @@ Open your browser and check if the eventlog-service is up and running:
 
 Now open grafana in `http://localhost:3000` and check the `Eventlog service` dashboard.
 
-## Starting the tester
+### Start the tester
 
 Open a new command line, change to the folder `eventlog-service-tester` and type in `gradlew run`.
 
@@ -526,6 +532,9 @@ What we can observe:
 - The CPU load is higher if we run without any delay. This is because the listener polls Kafka continously.
 - With 50ms delay, the lag jumps up to the 100.000 threadhold, sometimes it even get higher. This is because our monitor deliveres a new lag value only in every 5 seconds, and obviously within this 5 seconds the publisher is able to send another 50.000 messages to Kafka. But its not a problem, with the current maximal log size (1GB) the log can contain up to 30 millions of messages.
 
+## Delivery exactly ones
+
+The consumer side have to be improved a bit to achieve DEO. The standard behavior of the spring boot adapter, that it commits the consumer log in every 5 seconds automatically. We have to ensure, that there is no automatic commit, and we have to commit received messages one-by-one. Further more storing the received event in the database and commiting the consumed message id back to Kafka shall be done in one single transaction.
+
 ## Open questions
-- Commiting offsets on the consumer side
 - Memory consumption
